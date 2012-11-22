@@ -6,4 +6,4 @@ lib\_html\_parse (2012\_11\_07)
 Status
 ------
 
-Developing branch.
+Beta branch.
