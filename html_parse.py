@@ -52,7 +52,12 @@ class DataHtmlNode(HtmlNode):
         self.data = data
 
 class HtmlParser:
-    def __init__(self):
+    def __init__(self, use_min_attr_hack=None):
+        if use_min_attr_hack is None:
+            # ``use_min_attr_hack'' -- is hack for parsing non-standard minimized attributes
+            use_min_attr_hack = False
+        
+        self._use_min_attr_hack = use_min_attr_hack
         self._doc_node = DocHtmlNode()
         self._curr_node = self._doc_node
         
@@ -76,6 +81,15 @@ class HtmlParser:
         return self._doc_node
     
     def _starttag_handle(self, tag, attrs):
+        if self._use_min_attr_hack:
+            hack_attrs = []
+            for attr_name, attr_value in attrs:
+                if len(attr_value) >= 2 and \
+                        attr_value.startswith(' ') and attr_value.endswith(' '):
+                    attr_value = attr_value[1:-1]
+                hack_attrs.append((attr_name, attr_value))
+            attrs = hack_attrs
+        
         parent_node = self._curr_node
         while not isinstance(parent_node, DocHtmlNode) and \
                 not isinstance(parent_node, TagHtmlNode):
@@ -99,6 +113,11 @@ class HtmlParser:
             closing_node = closing_node.get_parent()
     
     def _data_handle(self, data):
+        assert isinstance(data, str)
+        
+        if self._use_min_attr_hack:
+            data = data.replace(' \' ', '\'').replace(' " ', '"')
+        
         if isinstance(self._curr_node, DataHtmlNode):
             self._curr_node.data += data
             return
@@ -134,10 +153,15 @@ class HtmlParser:
         self._doc_node.decl.append(decl)
     
     def feed(self, data):
+        assert isinstance(data, str)
+        
+        if self._use_min_attr_hack:
+            data = data.replace('"', ' " ').replace('\'', ' \' ')
+        
         self._parser_handler.feed(data)
 
-def html_parse(data):
-    parser = HtmlParser()
+def html_parse(data, use_min_attr_hack=None):
+    parser = HtmlParser(use_min_attr_hack=use_min_attr_hack)
     parser.feed(data)
     return parser.get_node()
 
