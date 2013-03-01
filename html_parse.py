@@ -84,7 +84,7 @@ class HtmlParser:
         if self._use_min_attr_hack:
             hack_attrs = []
             for attr_name, attr_value in attrs:
-                if len(attr_value) >= 2 and \
+                if isinstance(attr_value, str) and len(attr_value) >= 2 and \
                         attr_value.startswith(' ') and attr_value.endswith(' '):
                     attr_value = attr_value[1:-1]
                 hack_attrs.append((attr_name, attr_value))
